@@ -9,11 +9,11 @@ public class OutputUtils {
     private static final char DEFAULT_SEPARATOR = ',';
     private static FileWriter w = null;
     
-    public static void initWrite(String output) throws IOException {
+    public static void writerInit(String output) throws IOException {
     	w = new FileWriter(output);
     }
     
-    public static void cleanupWrite() throws IOException {
+    public static void writerCleanup() throws IOException {
     	w.flush();
         w.close();
     }
