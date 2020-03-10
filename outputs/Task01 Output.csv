@@ -1,0 +1,4 @@
+dataset_name,row_count
+yelp_businesses,192609
+yelp_top_reviewers_with_reviews,883737
+yelp_top_users_friendship_graph,1938472
