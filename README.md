@@ -539,3 +539,66 @@ These `Schema` objects are defined in the helper static class `Schemas`, separat
 
 Lastly, every schema is printed and saved in a simple text file. The result can be found in the file `outputs/output-05.txt`.
 
+## Task 06
+
+### a) Inner join review table and business table on business_id column
+
+```java
+	final Dataset<Row> dataFrameBusinesses = dataFrameReader
+		.csv(uriBusinesses);
+
+	final Dataset<Row> dataFrameReviewers = dataFrameReader
+		.csv(uriReviewers);
+	...
+	
+	dataFrameBusinesses.createOrReplaceTempView("businesses");
+	dataFrameReviewers.createOrReplaceTempView("reviewers");
+```
+
+Inititally, **temporary views** should be added for each loaded dataframe. Two new views are introduced - `businesses` and `reviewers`.
+
+```java
+	Dataset<Row> sqlResultJoin = sparkSession.sql(
+		    "SELECT businesses.business_id, businesses.name, reviewers.review_id, reviewers.review_date" 
+		+ " FROM businesses"
+		+ " INNER JOIN reviewers"
+		+ " ON businesses.business_id = reviewers.business_id");
+
+	out = new PrintStream(
+		new FileOutputStream(outputJoinedTable, true), true);
+	System.setOut(out);
+
+	sqlResultJoin.show();
+```
+
+Performing an **INNER JOIN** operation is straightforward. In this case, only some of the column values have been extracted for the sake of simplicity. The most important is the joining condtion of `ON businesses.business_id = reviewers.business_id"`.
+
+The result can be found in the file `outputs/output-06-a.txt`.
+
+### b) Save the new table in temporary table
+
+```java
+
+```
+
+The result for this subtask is not shown since it is the same table like in the subtask a).
+
+### c) Top 20 users with the most number of reviews sorted descendigly
+
+```java
+	Dataset<Row> sqlResultOrder = sparkSession.sql(
+		    "SELECT user_id, COUNT(*) as reviewed" 
+		+ " FROM reviewers"
+		+ " GROUP BY user_id"
+		+ " ORDER BY reviewed DESC");
+
+	out = new PrintStream(
+		new FileOutputStream(outputTopUsersByReviews, true), true);
+	System.setOut(out);
+
+	sqlResultOrder.show();
+```
+
+For this example, the same temporary views created previously are being used - `reviewers` to be concrete. Since the output represents 20 results no trimming is being done beforehand. Operations **GROUP BY, COUNT() and ORDER BY** are used to form the query. In the end we get top reviewers sorted by the number of reviews - with their `user_id` shown together with the sorted-by value.
+
+The result can be found in the file `outputs/output-06-c.txt`.
