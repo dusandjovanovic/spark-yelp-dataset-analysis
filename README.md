@@ -4,7 +4,7 @@
 
 Each tasks consists of a **separate runnable java class** and all associted code is located in the `.java` files which will be explained. Dataset files are placed in the `resources` folder and loaded locally.
 
-Important is the location of **output files** which is the `outputs/` folder. Output files are named accordingly to the coresponding task such as `output-01.csv` is the output file of the first task.
+The location of **output files** is the `outputs/` folder. Output files are named accordingly to the coresponding task such as `output-01.csv` is the output file of the first task.
 
 ```
 /
@@ -49,12 +49,7 @@ public class DatasetUtils {
 	
 	private static DatasetUtils single_instance = null;
 	
-	public static DatasetUtils getInstance() { 
-        if (single_instance == null) 
-            single_instance = new DatasetUtils(); 
-  
-        return single_instance; 
-    }
+	public static DatasetUtils getInstance();
 	
 	public static Long ExtractYear(String stamp);
 	
