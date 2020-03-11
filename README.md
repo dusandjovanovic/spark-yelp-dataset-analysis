@@ -481,3 +481,61 @@ Finding the median value relies on the `collect()` and traversing every entry wh
 Median value algorithm is naive and relies on the simple traversal where an element of **targeted index (middle of RDD)** is being extracted, or two elements and their mean value in case of an even number of RDD-entries. Thereby, this algorith will find *the-most-middle element in the RDD* which has been previously sorted for the needs of subtask a).
 
 The result can be found in the file `outputs/output-04-b.csv`.
+
+
+## Task 05
+
+### Load each file in the dataset into seprate DataFrames. Keep column types and names as in dataset description.
+
+```java
+	final SparkSession sparkSession = SparkSession.builder().appName(appName).master("local[*]")
+		.getOrCreate();
+
+	final DataFrameReader dataFrameReader = sparkSession.read();
+	dataFrameReader.option("header", "true");
+
+	final Dataset<Row> dataFrameBusinesses = dataFrameReader
+			.schema(Schemas.schemaBusinesses)
+			.csv(uriBusinesses);
+
+	final Dataset<Row> dataFrameReviewers = dataFrameReader
+			.schema(Schemas.schemaReviewers)
+			.csv(uriReviewers);
+
+	final Dataset<Row> dataFrameGraphs = dataFrameReader
+			.schema(Schemas.schemaGraph)
+			.csv(uriGraph);
+
+	PrintStream out = new PrintStream(
+		new FileOutputStream(output, true), true);
+	System.setOut(out);
+
+	dataFrameBusinesses.printSchema();
+	dataFrameReviewers.printSchema();
+	dataFrameGraphs.printSchema();
+```
+
+In order to form a **DataFrame** a `SparkSession` should be initialised. On top of the created session, DataFrames can be formed relying on a resource and a **custom-defined `Schema Object`**.
+
+```java
+public class Schemas {
+
+	public static StructType schemaBusinesses = new StructType()
+	    .add("business_id", "string")
+	    .add("name", "string")
+	    .add("address", "string")
+	    .add("city", "string")
+	    .add("state", "string")
+	    .add("postal_code", "string")
+	    .add("latitude", "float")
+	    .add("longitude", "float")
+	    .add("stars", "float")
+	    .add("review_count", "integer")
+	    .add("categories", "string");
+    	...
+```
+
+These `Schema` objects are defined in the helper static class `Schemas`, separate object is present for every resource gicing a three in total. In the code above we can see the example schema representing the Business's table.
+
+Lastly, every schema is printed and saved in a simple text file. The result can be found in the file `outputs/output-05.txt`.
+
