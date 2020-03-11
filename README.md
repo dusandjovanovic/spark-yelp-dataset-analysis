@@ -198,10 +198,10 @@ The result can be found in the file `outputs/output-02-a.csv`.
 ### b) What is the average number of characters in a user review
 
 ```java
-	Long rddReviewersAvarage = null;
+	Double rddReviewersAvarage = null;
 		
-	JavaRDD<Long> rddReviewersReviewText = rddReviewersNoHeader
-		.map(row -> (long)row.split("	")[3].length());
+	JavaRDD<Double> rddReviewersReviewText = rddReviewersNoHeader
+		.map(row -> Double.valueOf(DatasetUtils.decodeBase64(row.split("	")[3]).length()));
 	rddReviewersAvarage = rddReviewersReviewText.reduce((accum, n) -> (accum + n));
 	rddReviewersAvarage /= rddReviewersReviewText.count();
 
@@ -210,7 +210,7 @@ The result can be found in the file `outputs/output-02-a.csv`.
         OutputUtils.writerCleanup();
 ```
 
-Firstly, all user review string should be measured in length. After these values are **mapped** it is essential to to exectue an **action of `reduction`**  and accumulate all found values. Lastly, finding the average value requires using the total count of rows. 
+Firstly, all user review string should be measured in length, in order for this to happen every encoded byte-string should be decoded using the helper method `DatasetUtils.decodeBase64`. Once encoded string are available, their lengths can be measured. After these values are **mapped** it is essential to to exectue an **action of `reduction`**  and accumulate all found values. Lastly, finding the average value requires using the total count of rows. 
 
 The result can be found in the file `outputs/output-02-b.csv`.
 
@@ -289,7 +289,7 @@ The result can be found in the file `outputs/output-02-e.csv`.
 		.reduceByKey((a, b) -> a + b);
 
 	JavaPairRDD<String, Double> rddUserIdReviewLength = rddReviewersNoHeader
-		.mapToPair(row -> new Tuple2<String, Long>(row.split("	")[1], Long.valueOf(row.split("	")[3].length())))
+		.mapToPair(row -> new Tuple2<String, Long>(row.split("	")[1], Long.valueOf(DatasetUtils.decodeBase64(row.split("	")[3]).length())))
 		.groupByKey()
 		.mapToPair(row -> new Tuple2<String, Double>(row._1, DatasetUtils.IteratorAverage(row._2)));
 
@@ -320,6 +320,10 @@ The result can be found in the file `outputs/output-02-e.csv`.
 	Double accumDownL = Math.sqrt(accumDownLeft.value());
 	Double accumDownR = Math.sqrt(accumDownRight.value());
 	Double accumResult = accum / (accumDownL * accumDownR);
+
+	OutputUtils.writerInit(outputPCC);
+	OutputUtils.writeLine(Arrays.asList(accumResult.toString()));
+	OutputUtils.writerCleanup();
 ```
 
 This task requires multiple APIs including the accumulator variables. Firstly, two different `JavaPairRDD<String, Double>` RDDs are formed to represent review lengths and review counts. `IteratorAverage` is the helper method used to find an **avarege value** over an `Itereable` collection. After, they are being joined into a single `JavaPairRDD<String, Tuple2<Double, Double>>` RDD where each user_id is linked with coresponding values. Mean values are found on top of these RDDs using the action of **reduction**. Afterwards, accumulators are made and registered - in total of three for **every part of the equation**. Then, using the safe-lock approach of accumulators being changed in the `foreach` traversal these values are formed. The only thing left is to follow the equation and combine accumulated values togther into a result.
@@ -450,25 +454,30 @@ The results can be found in files `outputs/output-04-a-in.csv` and `outputs/outp
 Finding the mean values is straightforward and relies on the previously formed RDDs, where only the values representing the number of degrees are extracted and then accumulated. In the end, the total count of values determines the mean value. Approach is identical for both in and out-edges.
 
 ```java
+	Double median[] = { new Double(0D), new Double(0D) };
+	...
+
 	Long count = rddGraphSrc.count();
 	Long index[] = { 0L, count / 2, 0L };
-	if (count % 2 != 0)
+	if (count % 2 == 0)
 		index[2] = 1L;
 
 	rddGraphSrc.collect().forEach(t -> {
-		if (index[2] == 1 && index[0] == index[1] - 1)
-			median[0] += t._1;
-		else if (index[2] == 1 && index[0] == index[1]) {
-			median[0] += t._1;
+		if (index[2] == 1 && index[0] == index[1].longValue() - 1)
+			median[0] += Double.valueOf(t._1);
+		if (index[2] == 1 && index[0].longValue() == index[1].longValue()) {
+			median[0] += Double.valueOf(t._1);
 			median[0] /= 2;
 		}
-		else if (index[2] == 0 && index[0] == index[1])
-			median[0] /= t._1;
+		if (index[2] == 0 && index[0].longValue() == index[1].longValue())
+			median[0] = Double.valueOf(t._1);
 
 		index[0]++;
 	});
 ```
 
 Finding the median value relies on the `collect()` and traversing every entry while extracting only the values of the correct index. The `.count()` gives the sufficent information on how to approach the calculation of a median value.
+
+Median value algorithm is naive and relies on the simple traversal where an element of **targeted index (middle of RDD)** is being extracted, or two elements and their mean value in case of an even number of RDD-entries. Thereby, this algorith will find *the-most-middle element in the RDD* which has been previously sorted for the needs of subtask a).
 
 The result can be found in the file `outputs/output-04-b.csv`.
