@@ -578,10 +578,37 @@ The result can be found in the file `outputs/output-06-a.txt`.
 ### b) Save the new table in temporary table
 
 ```java
+	sqlResultJoin.createOrReplaceTempView("temporary_table");
 
+	Dataset<Row> sqlResultTestTemporary = sparkSession.sql(
+		    "SELECT *" 
+		+ " FROM temporary_table");
+
+	// In order to test temporary table uncomment the following line
+	// It will be printed in current output stream which bight be a file
+	sqlResultTestTemporary.show();
 ```
 
-The result for this subtask is not shown since it is the same table like in the subtask a).
+After a result of an SQL query is available it is stored in a **DataFrame `sqlResultJoin`**. By calling `createOrReplaceTempView("temporary_table")` this result is stored in a temporary table in RAM and can be referenced with `SELECT * FROM temporary_table` like in the example code above.
+
+The part from the output:
+
+```
++--------------------+--------------------+--------------------+-----------------+
+|         business_id|                name|           review_id|      review_date|
++--------------------+--------------------+--------------------+-----------------+
+|XJGMgs9Kh4kcgf8Os...|            Theatre7|-lFvxYOmAuZMOelAs...|1347033511.000000|
+|cHuA0Yb5oYwx1lrNV...|Brasado Chocolate...|-nyKSlK-acm7Tkuob...|1329607876.000000|
+|bPcqucuuClxYrIM8x...|           Due Forni|-pk4s5YUD0grEEBt2...|1317320228.000000|
+|rq5dgoksPHkJwJNQK...|Sambalatte Torref...|-UtICN8nUQ4g9qIHl...|1287264688.000000|
+|R-McIj4Psxl1VlEac...|            YoScream|0cdjRebZLHYu-xyMS...|1317320474.000000|
+|Vg1C_1eqwIwkZLIXG...|Crown & Anchor Br...|0hS9a57nL2qBTWoZC...|1448854643.000000|
+|5cbsjFtrntUAeUx51...|               Agave|12_4xbZupkMox3adr...|1288991575.000000|
+|kosTPb88O4Q0XGbVb...| Prommares Thai Food|1ikB-TEgwg2gigixD...|1287264422.000000|
+...
+```
+
+The result for this subtask is not shown in a file since it is the same table like in the subtask a).
 
 ### c) Top 20 users with the most number of reviews sorted descendigly
 
