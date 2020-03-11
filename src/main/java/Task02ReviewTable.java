@@ -52,10 +52,10 @@ public class Task02ReviewTable {
 
         /* b) What is the average number of characters in a user review */
 		
-		Long rddReviewersAvarage = null;
+		Double rddReviewersAvarage = null;
 		
-		JavaRDD<Long> rddReviewersReviewText = rddReviewersNoHeader
-				.map(row -> (long)row.split("	")[3].length());
+		JavaRDD<Double> rddReviewersReviewText = rddReviewersNoHeader
+				.map(row -> Double.valueOf(DatasetUtils.decodeBase64(row.split("	")[3]).length()));
 		rddReviewersAvarage = rddReviewersReviewText.reduce((accum, n) -> (accum + n));
 		rddReviewersAvarage /= rddReviewersReviewText.count();
 		
@@ -118,7 +118,7 @@ public class Task02ReviewTable {
 				.reduceByKey((a, b) -> a + b);
 				
 		JavaPairRDD<String, Double> rddUserIdReviewLength = rddReviewersNoHeader
-				.mapToPair(row -> new Tuple2<String, Long>(row.split("	")[1], Long.valueOf(row.split("	")[3].length())))
+				.mapToPair(row -> new Tuple2<String, Long>(row.split("	")[1], Long.valueOf(DatasetUtils.decodeBase64(row.split("	")[3]).length())))
 				.groupByKey()
 				.mapToPair(row -> new Tuple2<String, Double>(row._1, DatasetUtils.IteratorAverage(row._2)));
 		
@@ -151,7 +151,7 @@ public class Task02ReviewTable {
 		Double accumResult = accum / (accumDownL * accumDownR);
 		
 		OutputUtils.writerInit(outputPCC);
-		OutputUtils.writeLine(Arrays.asList(String.valueOf(accumResult)));
+		OutputUtils.writeLine(Arrays.asList(accumResult.toString()));
 		OutputUtils.writerCleanup();
 		
 		cleanup(context);
@@ -161,8 +161,8 @@ public class Task02ReviewTable {
 		context.close();
 	}
 	
-	private static void debugRDD(JavaRDD<Integer> rdd) { 
-		for(Integer line:rdd.collect())
+	private static void debugRDD(JavaRDD<String> rdd) { 
+		for(String line:rdd.collect())
             System.out.println(line);
 	}
 	

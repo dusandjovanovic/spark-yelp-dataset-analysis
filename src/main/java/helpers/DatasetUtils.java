@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 
@@ -22,6 +23,11 @@ public class DatasetUtils {
   
         return single_instance; 
     }
+	
+	public static String decodeBase64(String bytes) {
+		String byteString = new String(Base64.decodeBase64(bytes.getBytes()));
+		return byteString;
+	}
 	
 	public static Long ExtractYear(String stamp) {
 		String subString = ExtractTimestamp(stamp);

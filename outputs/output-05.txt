@@ -1,0 +1,24 @@
+root
+ |-- business_id: string (nullable = true)
+ |-- name: string (nullable = true)
+ |-- address: string (nullable = true)
+ |-- city: string (nullable = true)
+ |-- state: string (nullable = true)
+ |-- postal_code: string (nullable = true)
+ |-- latitude: float (nullable = true)
+ |-- longitude: float (nullable = true)
+ |-- stars: float (nullable = true)
+ |-- review_count: integer (nullable = true)
+ |-- categories: string (nullable = true)
+
+root
+ |-- review_id: string (nullable = true)
+ |-- user_id: string (nullable = true)
+ |-- business_id: string (nullable = true)
+ |-- review_text: string (nullable = true)
+ |-- review_date: timestamp (nullable = true)
+
+root
+ |-- src_user_id: string (nullable = true)
+ |-- dst_user_id: string (nullable = true)
+

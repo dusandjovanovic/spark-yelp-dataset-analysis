@@ -83,18 +83,18 @@ public class Task04GraphTable {
 		
 		Long count = rddGraphSrc.count();
 		Long index[] = { 0L, count / 2, 0L };
-		if (count % 2 != 0)
+		if (count % 2 == 0)
 			index[2] = 1L;
 
 		rddGraphSrc.collect().forEach(t -> {
-			if (index[2] == 1 && index[0] == index[1] - 1)
-				median[0] += t._1;
-			else if (index[2] == 1 && index[0] == index[1]) {
-				median[0] += t._1;
+			if (index[2] == 1 && index[0] == index[1].longValue() - 1)
+				median[0] += Double.valueOf(t._1);
+			if (index[2] == 1 && index[0].longValue() == index[1].longValue()) {
+				median[0] += Double.valueOf(t._1);
 				median[0] /= 2;
 			}
-			else if (index[2] == 0 && index[0] == index[1])
-				median[0] /= t._1;
+			if (index[2] == 0 && index[0].longValue() == index[1].longValue())
+				median[0] = Double.valueOf(t._1);
 			
 			index[0]++;
 		});
@@ -103,18 +103,18 @@ public class Task04GraphTable {
 		index[0] = 0L;
 		index[1] = count / 2;
 		index[2] = 0L;
-		if (count % 2 != 0)
+		if (count % 2 == 0)
 			index[2] = 1L;
 		
 		rddGraphDst.collect().forEach(t -> {
-			if (index[2] == 1 && index[0] == index[1] - 1)
-				median[1] += t._1;
-			else if (index[2] == 1 && index[0] == index[1]) {
-				median[1] += t._1;
+			if (index[2] == 1 && index[0] == index[1].longValue() - 1)
+				median[1] += Double.valueOf(t._1);
+			if (index[2] == 1 && index[0].longValue() == index[1].longValue()) {
+				median[1] += Double.valueOf(t._1);
 				median[1] /= 2;
 			}
-			else if (index[2] == 0 && index[0] == index[1])
-				median[1] /= t._1;
+			if (index[2] == 0 && index[0].longValue() == index[1].longValue())
+				median[1] = Double.valueOf(t._1);
 			
 			index[0]++;
 		});
@@ -139,7 +139,7 @@ public class Task04GraphTable {
             System.out.println(line);
 	}
 	
-	private static void debugPairRDD(JavaPairRDD<String, Long> rdd) {
+	private static void debugPairRDD(JavaPairRDD<Long, String> rdd) {
 		rdd.foreach(data -> {
 	        System.out.println(data._1() + " " + data._2());
 	    }); 
