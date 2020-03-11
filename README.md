@@ -91,6 +91,7 @@ public class OutputUtils {
 }
 ```
 
+
 ## Task 01
 
 ### a) Load the dataset into separate RDDs and cont the number of rows in each RDD
@@ -107,11 +108,11 @@ public static void main(String[] args) throws Exception {
 	Long rddBusinessesRows, rddReviewersRows, rddGraphRows;
 
 	JavaRDD<String> rddBusinessesNoHeader = rddBusinesses
-			.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
+		.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
 	JavaRDD<String> rddReviewersNoHeader = rddReviewers
-			.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
+		.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
 	JavaRDD<String> rddGraphNoHeader = rddGraph
-			.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
+		.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
 	...
 }
 ```
@@ -132,6 +133,9 @@ In the beginning, Spark envirement should be set-up and context initialised. Aft
 
 Lastly, finding the count of rows of every RDD is fairly easy using the `.count()` method from Spark's API.
 
+The result can be found in the file `outputs/output-01.csv`.
+
+
 ## Task 02
 
 ### a) How many different users are in the dataset
@@ -140,7 +144,7 @@ Lastly, finding the count of rows of every RDD is fairly easy using the `.count(
 	Long rddReviewersDistinctCount = null;
 		
 	JavaRDD<String> rddReviewersUserID = rddReviewersNoHeader
-			.map(row -> row.split("	")[1]);
+		.map(row -> row.split("	")[1]);
 	JavaRDD<String> rddReviewersDistinct = rddReviewersUserID.distinct();
 	rddReviewersDistinctCount = rddReviewersDistinct.count();
 
@@ -149,8 +153,9 @@ Lastly, finding the count of rows of every RDD is fairly easy using the `.count(
         OutputUtils.writerCleanup();
 ```
 
-In order to find distinct users all **user_id** values should be mapped separately and afterwards distincted with `.distinct()`. The result can be found in the file `outputs/output-02-a.csv`.
+In order to find distinct users all **user_id** values should be mapped separately and afterwards distincted with `.distinct()`. 
 
+The result can be found in the file `outputs/output-02-a.csv`.
 
 ### b) What is the average number of characters in a user review
 
@@ -158,7 +163,7 @@ In order to find distinct users all **user_id** values should be mapped separate
 	Long rddReviewersAvarage = null;
 		
 	JavaRDD<Long> rddReviewersReviewText = rddReviewersNoHeader
-			.map(row -> (long)row.split("	")[3].length());
+		.map(row -> (long)row.split("	")[3].length());
 	rddReviewersAvarage = rddReviewersReviewText.reduce((accum, n) -> (accum + n));
 	rddReviewersAvarage /= rddReviewersReviewText.count();
 
@@ -167,7 +172,9 @@ In order to find distinct users all **user_id** values should be mapped separate
         OutputUtils.writerCleanup();
 ```
 
-Firstly, all user review string should be measured in length. After these values are **mapped** it is essential to to exectue an **action of `reduction`**  and accumulate all found values. Lastly, finding the average value requires using the total count of rows. The result can be found in the file `outputs/output-02-b.csv`.
+Firstly, all user review string should be measured in length. After these values are **mapped** it is essential to to exectue an **action of `reduction`**  and accumulate all found values. Lastly, finding the average value requires using the total count of rows. 
+
+The result can be found in the file `outputs/output-02-b.csv`.
 
 ### c) What is the business id of top 10 businesses with the most number or reviews
 
@@ -180,13 +187,250 @@ Firstly, all user review string should be measured in length. After these values
 
 	OutputUtils.writerInit(outputTopBusinesses);
 	rddBusinessIds.take(10).forEach(t -> {
-	try {
-		OutputUtils.writeLine(Arrays.asList(String.valueOf(t._2), String.valueOf(t._1)));
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
+		try {
+			OutputUtils.writeLine(Arrays.asList(String.valueOf(t._2), String.valueOf(t._1)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		});
+	OutputUtils.writerCleanup();
+```
+
+Important information for this task is the **bussines_id** and the number of reviews associated to it, hence the mapping to a `JavaPairRDD<String, Long>` RDD which relies on the `Tuple2` object for every entry. After these tuples are made, **reduction by key** is used to accumulate reviews coming from the same business source. Lastly, sorting is done by the accumulated values - first by swapping the topuple's key and value and then sorting by value giving a `JavaPairRDD<Long, String>` RDD of businesses sorted in descending order by the number of reviews. Top 10 results are taken from the RDD relying on the `.take(n)` API.
+
+The result can be found in the file `outputs/output-02-c.csv`.
+
+### d) Find the number of reviews per year
+
+```java
+	JavaPairRDD<Long, Long> rddReviewsIdsYears = rddReviewersNoHeader
+		.mapToPair(row -> new Tuple2<Long, Long>(DatasetUtils.ExtractYear(row.split("	")[4]), 1L))
+		.reduceByKey((a, b) -> a + b);
+
+	OutputUtils.writerInit(outputReviewsPerYear);
+	rddReviewsIdsYears.collect().forEach(t -> {
+		try {
+			OutputUtils.writeLine(Arrays.asList(String.valueOf(t._1), String.valueOf(t._2)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	});
 	OutputUtils.writerCleanup();
 ```
 
-Important information for this task is the **bussines_id** and the number of reviews associated to it, hence the mapping to a `JavaPairRDD<String, Long>` RDD which relies on the `Tuple2` object for every entry. After these tuples are made, **reduction by key** is used to accumulate reviews coming from the same business source. Lastly, sorting is done by the accumulated values - first by swapping the topuple's key and value and then sorting by value giving a `JavaPairRDD<Long, String>` RDD. Top 10 results are taken from the RDD relying on the `.take(n)` API. The result can be found in the file `outputs/output-02-c.csv`.
+In order to find the number of reviews per year a pair mapping of `JavaPairRDD<Long, Long>` is being used. After the year and `1L` value are mapped for every entry these should be **reduced** by every year. This is a similar approach as used in one of the previous subtasks.
+
+The result can be found in the file `outputs/output-02-d.csv`.
+
+### e) What is the time and date of first and last review
+
+```java
+	JavaRDD<Long> rddReviewsIdsDateTime = rddReviewersNoHeader
+		.map(row -> Long.parseLong(DatasetUtils.ExtractTimestamp(row.split("	")[4])));
+
+	Long minDateTime = null, maxDateTime = null;
+
+	minDateTime = rddReviewsIdsDateTime.min(Comparator.<Long>naturalOrder());
+	maxDateTime = rddReviewsIdsDateTime.max(Comparator.<Long>naturalOrder());
+
+	OutputUtils.writerInit(outputFirstLastReview);
+	OutputUtils.writeLine(Arrays.asList(DatasetUtils.ExtractDate(minDateTime)));
+	OutputUtils.writeLine(Arrays.asList(DatasetUtils.ExtractDate(maxDateTime)));
+	OutputUtils.writerCleanup();
+```
+
+Finding the min/max values requires only mapping timestamp information of all entries. Once these are being mapped, `.min(IComparator)` and `.max(IComparator)` actions are used to extract these values. UNIX timestamps represent the number of miliseconds and shouldn't be converted for the `Comparator` instances. Lastly, helper methods are used to convert the timestamps to dates.
+
+The result can be found in the file `outputs/output-02-e.csv`.
+
+### f) Calculate the Pearson correlation coefficient (PCC)
+
+```java
+	JavaPairRDD<String, Double> rddUserIdReviewCount = rddReviewersNoHeader
+		.mapToPair(row -> new Tuple2<String, Double>(row.split("	")[1], 1D))
+		.reduceByKey((a, b) -> a + b);
+
+	JavaPairRDD<String, Double> rddUserIdReviewLength = rddReviewersNoHeader
+		.mapToPair(row -> new Tuple2<String, Long>(row.split("	")[1], Long.valueOf(row.split("	")[3].length())))
+		.groupByKey()
+		.mapToPair(row -> new Tuple2<String, Double>(row._1, DatasetUtils.IteratorAverage(row._2)));
+
+	JavaPairRDD<String, Tuple2<Double, Double>> rddUserIdJoined = rddUserIdReviewCount.join(rddUserIdReviewLength);
+
+	Double rddUserIdReviewCountMean = rddUserIdReviewCount
+		.map(row -> row._2)
+		.reduce((accum, n) -> (accum + n));
+
+	Double rddUserIdReviewLengthMean = rddUserIdReviewLength
+		.map(row -> row._2)
+		.reduce((accum, n) -> (accum + n));
+
+	DoubleAccumulator accumUp = new DoubleAccumulator();
+	DoubleAccumulator accumDownLeft = new DoubleAccumulator();
+	DoubleAccumulator accumDownRight = new DoubleAccumulator();
+	accumUp.register(sparkContext, Option.apply("accumUp"), false);
+	accumDownLeft.register(sparkContext, Option.apply("accumDownLeft"), false);
+	accumDownRight.register(sparkContext, Option.apply("accumDownRight"), false);
+
+	rddUserIdJoined.foreach(element -> {
+		accumUp.add((element._2._1 - rddUserIdReviewCountMean) * (element._2._2 - rddUserIdReviewLengthMean));
+		accumDownLeft.add((element._2._1 - rddUserIdReviewCountMean) * (element._2._1 - rddUserIdReviewCountMean));
+		accumDownRight.add((element._2._2 - rddUserIdReviewLengthMean) * (element._2._2 - rddUserIdReviewLengthMean));
+	});
+
+	Double accum = accumUp.value();
+	Double accumDownL = Math.sqrt(accumDownLeft.value());
+	Double accumDownR = Math.sqrt(accumDownRight.value());
+	Double accumResult = accum / (accumDownL * accumDownR);
+```
+
+This task requires multiple APIs including the accumulator variables. Firstly, two different `JavaPairRDD<String, Double>` RDDs are formed to represent review lengths and review counts. `IteratorAverage` is the helper method used to find an **avarege value** over an `Itereable` collection. After, they are being joined into a single `JavaPairRDD<String, Tuple2<Double, Double>>` RDD where each user_id is linked with coresponding values. Mean values are found on top of these RDDs using the action of **reduction**. Afterwards, accumulators are made and registered - in total of three for **every part of the equation**. Then, using the safe-lock approach of accumulators being changed in the `foreach` traversal these values are formed. The only thing left is to follow the equation and combine accumulated values togther into a result.
+
+The result can be found in the file `outputs/output-02-f.csv`.
+
+
+## Task 03
+
+### a) What is the average rating for businesses in each city
+
+```java
+	JavaPairRDD<String, Double> rddBusinessesCity = rddBusinessesNoHeader
+		.mapToPair(row -> new Tuple2<String, Long>(row.split("	")[3], Long.valueOf(row.split("	")[8])))
+		.groupByKey()
+		.mapToPair(row -> new Tuple2<String, Double>(row._1, DatasetUtils.IteratorAverage(row._2)));
+
+	OutputUtils.writerInit(outputAvarageRating);
+	rddBusinessesCity.collect().forEach(t -> {
+		try {
+			OutputUtils.writeLine(Arrays.asList(String.valueOf(t._1), String.valueOf(t._2)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	});
+        OutputUtils.writerCleanup();
+```
+
+Finding the average rating requires mapping all ratings and cities together in a `JavaPairRDD<String, Double>`, grouping the ratings by city and lastly using the `IteratorAverage` the helper method used to find an **avarege value** over an `Itereable` collection - where collection represent and ratings for one city.
+
+The result can be found in the file `outputs/output-03-a.csv`.
+
+### b) What are the top 10 most frequent categories in the data
+
+```java
+	JavaPairRDD<Long, String> rddBusinessesCategories = rddBusinessesNoHeader
+		.map(row -> row.split("	")[10])
+		.flatMap(row -> Arrays.asList(row.split(", ")).iterator())
+		.mapToPair(row -> new Tuple2<String, Long>(row, 1L))
+		.reduceByKey((a, b) -> a + b)
+		.mapToPair(row -> new Tuple2<Long, String>(row._2, row._1))
+		.sortByKey(false);
+
+	OutputUtils.writerInit(outputTopCategories);
+	rddBusinessesCategories.take(10).forEach(t -> {
+		try {
+			OutputUtils.writeLine(Arrays.asList(String.valueOf(t._2), String.valueOf(t._1)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	});
+	OutputUtils.writerCleanup();
+```
+
+Category lists should be first mapped, afterwards flattened so that separate categories end up as single entries. Since this point, every category should be transformed into `JavaPairRDD<String, Long>` with it's name and '1L' repetitions. After reduction, repetitions are accumulated to all unique categories. Lastly, mapping the order around and sorting gives the categories and number of repetitions in descending order. Top 10 results are taken from the RDD relying on the `.take(n)` API. 
+
+The result can be found in the file `outputs/output-03-b.csv`.
+
+### c) Calculate the geographical centroid of each region by postal-code
+
+```java
+	JavaPairRDD<String, Tuple2<Double, Double>> rddBusinessesPostalCode = rddBusinessesNoHeader
+		.mapToPair(row -> new Tuple2<String, Tuple2<Double, Double>>(row.split("	")[5], new Tuple2<Double, Double>(Double.valueOf(row.split("	")[6]), Double.valueOf(row.split("	")[7]))))
+		.groupByKey()
+		.mapToPair(row -> new Tuple2<String, Tuple2<Double, Double>>(row._1, DatasetUtils.IteratorGeographicalCentroid(row._2)));
+		
+	OutputUtils.writerInit(outputGeographicalCentroid);
+	rddBusinessesPostalCode.collect().forEach(t -> {
+		try {
+			OutputUtils.writeLine(Arrays.asList(String.valueOf(t._1), String.valueOf(t._2)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	});
+	OutputUtils.writerCleanup();
+```
+
+Finding the centroid coordinates for every postal code requires a form of `JavaPairRDD<String, Tuple2<Double, Double>>` where each postal code is associated with it's geographical centroid lat/lng. Once all entries are mapped with postal code and location, a **grouping by key** is essential to gather all related coordinate values (for each postal code). After the grouping, a `IteratorGeographicalCentroid` helper method is called for every `Iterable` collection of coordinates performing the required calculation and returning a `Touple` of values representing the searched point in the form of `Tuple2<Double, Double>`.
+
+The result can be found in the file `outputs/output-03-c.csv`.
+
+
+## Task 04
+
+### a) Find the top 10 nodes with the most number of in and out degrees
+
+```java
+	JavaPairRDD<Long, String> rddGraphSrc = rddGraphNoHeader
+		.mapToPair(row -> new Tuple2<String, Long>(row.split(",")[0], 1L))
+		.reduceByKey((a, b) -> a + b)
+		.mapToPair(row -> new Tuple2<Long, String>(row._2, row._1))
+		.sortByKey(false);
+
+	JavaPairRDD<Long, String> rddGraphDst = rddGraphNoHeader
+		.mapToPair(row -> new Tuple2<String, Long>(row.split(",")[1], 1L))
+		.reduceByKey((a, b) -> a + b)
+		.mapToPair(row -> new Tuple2<Long, String>(row._2, row._1))
+		.sortByKey(false);
+
+	OutputUtils.writerInit(outputTopNodesSrc);
+	rddGraphSrc.take(10).forEach(t -> {
+		try {
+			OutputUtils.writeLine(Arrays.asList(String.valueOf(t._2), String.valueOf(t._1)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	});
+	OutputUtils.writerCleanup();
+	
+	// Writing to a file for Dst degrees is almost identical...
+```
+
+`JavaPairRDD<Long, String>` is required for two directions this time. Each RDD is formed separately, in the case of out and in edges. The approach is identical, first every id is mapped with a value of `1L` for every out-edge, and then in the second iteration for every in-edge. At this point, every node id is associated with a different instance of the degree and **reduction** should be made to count the number of edges for every id. After reduction, previously explained approach of swapping and then sorting by value is being used. Lastly, for both cases, top 10 results are taken from the RDD relying on the `.take(n)` API.
+
+The results can be found in files `outputs/output-04-a-in.csv` and `outputs/output-04-a-out.csv` files for nodes with the most in/out degrees in the mentioned order.
+
+### b) Find the mean and median for number of in and out degrees
+
+```java
+	Double meanSrc = new Double(0D);
+	
+	meanSrc = rddGraphSrc
+		.map(row -> (double)row._1)
+		.reduce((accum, n) -> (accum + n));
+	meanSrc /= rddGraphSrc.count();
+```
+
+Finding the mean values is straightforward and relies on the previously formed RDDs, where only the values representing the number of degrees are extracted and then accumulated. In the end, the total count of values determines the mean value. Approach is identical for both in and out-edges.
+
+```java
+	Long count = rddGraphSrc.count();
+	Long index[] = { 0L, count / 2, 0L };
+	if (count % 2 != 0)
+		index[2] = 1L;
+
+	rddGraphSrc.collect().forEach(t -> {
+		if (index[2] == 1 && index[0] == index[1] - 1)
+			median[0] += t._1;
+		else if (index[2] == 1 && index[0] == index[1]) {
+			median[0] += t._1;
+			median[0] /= 2;
+		}
+		else if (index[2] == 0 && index[0] == index[1])
+			median[0] /= t._1;
+
+		index[0]++;
+	});
+```
+
+Finding the median value relies on the `collect()` and traversing every entry while extracting only the values of the correct index. The `.count()` gives the sufficent information on how to approach the calculation of a median value.
+
+The result can be found in the file `outputs/output-04-b.csv`.
