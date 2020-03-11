@@ -13,7 +13,8 @@ The location of **output files** is the `outputs/` folder. Output files are name
     helpers/
         DatasetUtils.java
         OutputUtils.java
-    <default_package>
+	Schemas.java
+    <default_package>/
         Main.java
         Task01RowCount.java
         Task02ReviewTable.java
@@ -29,18 +30,27 @@ The location of **output files** is the `outputs/` folder. Output files are name
   pom.xml
 ```
 
-For example, the class which could be found in `Task01RowCount.java` operates everything related to the first task. All other task-related classes are in the `<default_package>`, on the other hand the `helpers` package has two utility classes with shared behaviours.
+For example, the class which could be found in `Task01RowCount.java` operates everything related to the first task. All other task-related classes are in the `<default_package>`, on the other hand the `helpers` package has three utility classes with shared behaviours.
+
+```diff
+- Important* resource files are not present on this repository since they are 1GB+ in size!
+
++ All dataset resources should be imported in the /resources folder.
+```
 
 ## Shared behaviours and classes
 
 `DatasetUtils` class has several shared and isolated methods such as:
-1) `Long ExtractYear` - extracting year from timestamp
-2) `String ExtractTimestamp` - extracting and trimming timestamp strings
-3) `String ExtractDate` - extracting date object from timestamp
-4) `Double IteratorAverage` - finding the average value from an Iterator
-5) `Tuple2<Double, Double> IteratorGeographicalCentroid` - finding the centroid location
-6) `Function2<Integer, Iterator<String>, Iterator<String>> RemoveHeader` - clearing header rows from .csv files
-7) `FlatMapFunction<String, String> RemoveSpaces` - clearing spaces in strings
+1) `String decodeBase64` - decoding base64 strings
+2) `Long ExtractYear` - extracting year from timestamp
+3) `String ExtractTimestamp` - extracting and trimming timestamp strings
+4) `String ExtractDate` - extracting date object from timestamp
+5) `Double IteratorAverage` - finding the average value from an Iterator
+6) `Tuple2<Double, Double> IteratorGeographicalCentroid` - finding the centroid location
+7) `Function2<Integer, Iterator<String>, Iterator<String>> RemoveHeader` - clearing header rows from .csv files
+8) `FlatMapFunction<String, String> RemoveSpaces` - clearing spaces in strings
+
+In this report only signatures of mentioned methods are shown. Source code could be inspected for a detailed look.
 
 ```java
 package helpers;
@@ -50,6 +60,8 @@ public class DatasetUtils {
 	private static DatasetUtils single_instance = null;
 	
 	public static DatasetUtils getInstance();
+	
+	public static String decodeBase64(String bytes);
 	
 	public static Long ExtractYear(String stamp);
 	
@@ -91,6 +103,32 @@ public class OutputUtils {
 }
 ```
 
+Lastly, `Schemas` is a static class holding database `StructType` schemas used in last two tasks.
+
+```java
+package helpers;
+
+import org.apache.spark.sql.types.StructType;
+
+public class Schemas {
+
+	public static StructType schemaBusinesses = new StructType()
+	    .add("business_id", "string")
+	    .add("name", "string")
+	    .add("address", "string")
+	    ...
+	
+	public static StructType schemaReviewers = new StructType()
+	    .add("review_id", "string")
+	    .add("user_id", "string")
+	    .add("business_id", "string")
+	    ...
+	
+	public static StructType schemaGraph = new StructType()
+	    .add("src_user_id", "string")
+	    .add("dst_user_id", "string");
+}
+```
 
 ## Task 01
 
