@@ -93,3 +93,42 @@ public class OutputUtils {
     public static void writeLine(List<String> values, char separators, char customQuote) throws IOException;
 }
 ```
+
+## Task 01
+
+### a) Load the dataset into separate RDDs and cont the number of rows in each RDD
+
+```java
+public static void main(String[] args) throws Exception {
+	SparkConf config = new SparkConf().setAppName(appName).setMaster("local[*]");
+	JavaSparkContext context = new JavaSparkContext(config);
+
+	JavaRDD<String> rddBusinesses = context.textFile(uriBusinesses);
+	JavaRDD<String> rddReviewers = context.textFile(uriReviewers);
+	JavaRDD<String> rddGraph = context.textFile(uriGraph);
+
+	Long rddBusinessesRows, rddReviewersRows, rddGraphRows;
+
+	JavaRDD<String> rddBusinessesNoHeader = rddBusinesses
+			.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
+	JavaRDD<String> rddReviewersNoHeader = rddReviewers
+			.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
+	JavaRDD<String> rddGraphNoHeader = rddGraph
+			.mapPartitionsWithIndex(DatasetUtils.RemoveHeader, false);
+	...
+}
+```
+
+In the beginning, Spark envirement should be set-up and context initialised. Afterwards **separate RDDs** are formed for every input file and cleared of the first row which has mandatory .csv meta headers - for this the shared `DatasetUtils.RemoveHeader` method is being used.
+
+```java
+	rddBusinessesRows = rddBusinessesNoHeader.count();
+	...
+		
+        OutputUtils.writerInit(output);
+        OutputUtils.writeLine(Arrays.asList(columnsHeader));
+        OutputUtils.writeLine(Arrays.asList(columnBusinesses, rddBusinessesRows.toString()));
+	...
+```
+
+Lastly, finding the count of rows of every RDD is fairly easy using the `.count()` method from Spark's API.
