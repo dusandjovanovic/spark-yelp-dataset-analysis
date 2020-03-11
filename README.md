@@ -4,6 +4,8 @@
 
 Each tasks consists of a **separate runnable java class** and all associted code is located in the `.java` files which will be explained. Dataset files are placed in the `resources` folder and loaded locally.
 
+Important is the location of **output files** which is the `outputs/` folder. Output files are named accordingly to the coresponding task such as `output-01.csv` is the output file of the first task.
+
 ```
 /
   src/
@@ -19,8 +21,8 @@ Each tasks consists of a **separate runnable java class** and all associted code
         Task04GraphTable.java
         Task05DBase.java
         Task06DBase.java
-  .settings/
   target/
+  outputs/
   .cache-main
   .classpath
   .project
